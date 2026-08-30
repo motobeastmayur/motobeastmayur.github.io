@@ -1,0 +1,6 @@
+{
+  "name": "MayurBot - Neon AI Chat",
+  "description": "Minimalist pitch-black & neon cybernetic AI chat with multi-model support (Gemini 3.7 Flash, Gemini 3.1 Pro, ChatGPT, Claude 3.7, DeepSeek), live animated cybernetic background, and automatic error fallback.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

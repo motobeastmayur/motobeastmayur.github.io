@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #000000;
+    color: #f1f5f9;
+  }
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Neon Glow Utility Classes */
+.neon-cyan-border {
+  border: 1px solid rgba(0, 243, 255, 0.5);
+  box-shadow: 0 0 12px rgba(0, 243, 255, 0.25), inset 0 0 8px rgba(0, 243, 255, 0.08);
+}
+
+.neon-cyan-glow {
+  border: 1px solid rgba(0, 243, 255, 0.7);
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.35), inset 0 0 12px rgba(0, 243, 255, 0.12);
+}
+
+.neon-purple-border {
+  border: 1px solid rgba(176, 38, 255, 0.5);
+  box-shadow: 0 0 12px rgba(176, 38, 255, 0.25), inset 0 0 8px rgba(176, 38, 255, 0.08);
+}
+
+.neon-purple-glow {
+  border: 1px solid rgba(176, 38, 255, 0.7);
+  box-shadow: 0 0 20px rgba(176, 38, 255, 0.35), inset 0 0 12px rgba(176, 38, 255, 0.12);
+}
+
+.neon-card {
+  background: rgba(8, 8, 12, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 243, 255, 0.1);
+}
+
+.neon-card:hover {
+  border-color: rgba(0, 243, 255, 0.4);
+  box-shadow: 0 6px 30px 0 rgba(0, 0, 0, 0.9), 0 0 22px rgba(0, 243, 255, 0.2);
+}
+
+/* Cybernetic Grid & Live Background Animation */
+.cyber-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 243, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(176, 38, 255, 0.04) 1px, transparent 1px);
+  animation: grid-scroll 25s linear infinite;
+}
+
+@keyframes grid-scroll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 40px;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes rotate-radial {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 8s ease-in-out infinite;
+}
+
+.animate-rotate-radial {
+  animation: rotate-radial 20s linear infinite;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 243, 255, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 243, 255, 0.6);
+  box-shadow: 0 0 8px #00f3ff;
+}
