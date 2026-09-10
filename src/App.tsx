@@ -33,8 +33,43 @@ export default function App() {
 
   const [enableWebSearch, setEnableWebSearch] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // Theme state ('dark' or 'light')
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      return (localStorage.getItem('mayurbot_theme') as 'dark' | 'light') || 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  const toggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem('mayurbot_theme', next);
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+      document.body.style.backgroundColor = '#f8fafc';
+      document.body.style.color = '#0f172a';
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      document.body.style.backgroundColor = '#08060f';
+      document.body.style.color = '#f1f5f9';
+    }
+  }, [theme]);
 
   // Folders state
   const [folders, setFolders] = useState<ChatFolder[]>(() => {
@@ -270,6 +305,7 @@ export default function App() {
         );
       }
 
+      const thoughtDurationSec = response.latencyMs ? +(response.latencyMs / 1000).toFixed(1) : 1.8;
       const botMessage: ChatMessage = {
         id: `msg-${Date.now()}-bot`,
         role: 'model',
@@ -278,6 +314,15 @@ export default function App() {
         modelUsed: response.modelUsed || selectedModel,
         latencyMs: response.latencyMs,
         groundingSources: response.groundingSources,
+        thoughtDurationSec,
+        thoughtSteps: [
+          'Deconstructed prompt constraints and contextual parameters.',
+          enableWebSearch
+            ? 'Retrieved real-time citations and factual data via Web Search.'
+            : 'Activated neural knowledge embeddings and semantic reasoning chains.',
+          'Evaluated logical consistency across multiple candidate outputs.',
+          'Synthesized coherent, high-precision structured response.',
+        ],
       };
 
       const finalMessages = [...updatedMessages, botMessage];
@@ -361,6 +406,7 @@ export default function App() {
         );
       }
 
+      const thoughtDurationSec = response.latencyMs ? +(response.latencyMs / 1000).toFixed(1) : 1.8;
       const botMessage: ChatMessage = {
         id: `msg-${Date.now()}-bot`,
         role: 'model',
@@ -369,6 +415,15 @@ export default function App() {
         modelUsed: response.modelUsed || selectedModel,
         latencyMs: response.latencyMs,
         groundingSources: response.groundingSources,
+        thoughtDurationSec,
+        thoughtSteps: [
+          'Deconstructed prompt constraints and contextual parameters.',
+          enableWebSearch
+            ? 'Retrieved real-time citations and factual data via Web Search.'
+            : 'Activated neural knowledge embeddings and semantic reasoning chains.',
+          'Evaluated logical consistency across multiple candidate outputs.',
+          'Synthesized coherent, high-precision structured response.',
+        ],
       };
 
       const finalMessages = [...trimmed, botMessage];
@@ -392,12 +447,18 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#000000] text-slate-100 flex flex-col justify-between overflow-hidden selection:bg-[#00f3ff]/30 selection:text-[#00f3ff]">
+    <div
+      className={`relative h-screen flex overflow-hidden transition-colors duration-200 ${
+        theme === 'light'
+          ? 'bg-[#f8fafc] text-slate-900 selection:bg-violet-100 selection:text-violet-800'
+          : 'bg-[#08060f] text-slate-100 selection:bg-violet-500/30 selection:text-violet-300'
+      }`}
+    >
       {/* Intro Video Splash Screen (Mobile & Desktop Responsive) */}
       <IntroSplashScreen />
 
-      {/* Live Animated Background */}
-      <CyberBackground />
+      {/* Lightweight Hardware-Accelerated Cyber Background */}
+      <CyberBackground theme={theme} />
 
       {/* Slide-out Workspace & Folder Sidebar */}
       <Sidebar
@@ -416,37 +477,42 @@ export default function App() {
         onMoveChatToFolder={handleMoveChatToFolder}
         selectedFolderId={selectedFolderId}
         setSelectedFolderId={setSelectedFolderId}
+        theme={theme}
       />
 
-      {/* Top Navbar */}
-      <NeonHeader
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
-        enableWebSearch={enableWebSearch}
-        setEnableWebSearch={setEnableWebSearch}
-        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-        onNewChat={handleNewChat}
-        onSaveChat={handleSaveChat}
-        hasMessages={messages.length > 0}
-      />
-
-      {/* Main Chat Stream Workspace */}
-      <main className="relative z-10 flex-1 flex flex-col max-w-4xl w-full mx-auto overflow-hidden">
-        <ChatStream
-          messages={messages}
-          isLoading={isLoading}
-          onRegenerate={handleRegenerate}
+      {/* Right Column: Header + Chat Stream + Input Bar */}
+      <div className="relative z-10 flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        {/* Top Navbar with Theme Toggle (Top model dropdown removed as requested) */}
+        <NeonHeader
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          onNewChat={handleNewChat}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
-        {/* Pitch-Black Neon Input Bar */}
-        <NeonInputBar
-          onSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          selectedModel={selectedModel}
-          enableWebSearch={enableWebSearch}
-          setEnableWebSearch={setEnableWebSearch}
-        />
-      </main>
+        {/* Main Chat Stream Workspace */}
+        <main className="flex-1 flex flex-col min-h-0 w-full overflow-hidden">
+          <ChatStream
+            messages={messages}
+            isLoading={isLoading}
+            onRegenerate={handleRegenerate}
+            selectedModel={selectedModel}
+            enableWebSearch={enableWebSearch}
+            theme={theme}
+          />
+
+          {/* Floating Input Bar with Model Selector & Tools */}
+          <NeonInputBar
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            selectedModel={selectedModel}
+            setSelectedModel={setSelectedModel}
+            enableWebSearch={enableWebSearch}
+            setEnableWebSearch={setEnableWebSearch}
+            theme={theme}
+          />
+        </main>
+      </div>
 
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

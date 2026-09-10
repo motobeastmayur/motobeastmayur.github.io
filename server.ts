@@ -52,13 +52,14 @@ function resolveGeminiModelName(requestedModel?: string): string {
   return modelMap[sanitized] || "gemini-3.7-flash";
 }
 
-// OpenRouter caller with model candidate resolution, token bounding, and clean error handling
+// OpenRouter caller with model candidate resolution, token bounding, attachment support, and clean error handling
 async function callOpenRouter(
   model: string,
   prompt: string,
   history: any[],
   systemInstruction: string,
-  temperature: number
+  temperature: number,
+  attachment?: { mimeType: string; data: string } | null
 ): Promise<{ text: string; modelUsed: string } | { error: string } | null> {
   const openRouterKey = process.env.OPENROUTER_API_KEY;
   if (!openRouterKey || openRouterKey === "MY_OPENROUTER_API_KEY") {
@@ -80,7 +81,20 @@ async function callOpenRouter(
     }
   }
 
-  messages.push({ role: "user", content: prompt });
+  if (attachment && attachment.data && attachment.mimeType) {
+    const dataUrl = attachment.data.startsWith("data:")
+      ? attachment.data
+      : `data:${attachment.mimeType};base64,${attachment.data}`;
+    messages.push({
+      role: "user",
+      content: [
+        { type: "text", text: prompt || "Please analyze this image." },
+        { type: "image_url", image_url: { url: dataUrl } },
+      ],
+    });
+  } else {
+    messages.push({ role: "user", content: prompt || "Hello" });
+  }
 
   // Map model candidates
   let candidateModels = [model];
@@ -90,21 +104,47 @@ async function callOpenRouter(
       "anthropic/claude-3.7-sonnet",
       "anthropic/claude-3.5-haiku",
       "anthropic/claude-3-haiku",
-      "anthropic/claude-3.5-sonnet:beta",
-      "anthropic/claude-3-5-sonnet-20241022",
       "anthropic/claude-3.5-sonnet",
     ];
   } else if (model.includes("deepseek-r1")) {
     candidateModels = [
       "deepseek/deepseek-r1",
-      "deepseek/deepseek-r1:free",
       "deepseek/deepseek-chat",
+    ];
+  } else if (model.includes("deepseek-chat") || model.includes("deepseek")) {
+    candidateModels = [
+      "deepseek/deepseek-chat",
+      "deepseek/deepseek-r1",
     ];
   } else if (model.includes("gpt-4o")) {
     candidateModels = [
       model,
       "openai/gpt-4o-mini",
       "openai/gpt-4o",
+    ];
+  } else if (model.includes("gemini-3.7-flash") || model === "gemini-3.7-flash") {
+    candidateModels = [
+      "google/gemini-3.7-flash",
+      "google/gemini-2.5-flash",
+      "google/gemini-2.5-flash-lite",
+    ];
+  } else if (model.includes("3.1-pro") || model === "gemini-3.1-pro-preview") {
+    candidateModels = [
+      "google/gemini-2.5-pro",
+      "google/gemini-3.7-flash",
+      "google/gemini-2.5-flash",
+    ];
+  } else if (model.includes("3.1-flash-lite") || model === "gemini-3.1-flash-lite") {
+    candidateModels = [
+      "google/gemini-2.5-flash-lite",
+      "google/gemini-2.5-flash",
+      "google/gemini-3.7-flash",
+    ];
+  } else if (model.startsWith("google/")) {
+    candidateModels = [
+      model,
+      "google/gemini-2.5-flash",
+      "google/gemini-3.7-flash",
     ];
   }
 
@@ -125,7 +165,7 @@ async function callOpenRouter(
           model: candidateModel,
           messages,
           temperature: Number(temperature) || 0.7,
-          max_tokens: 2048, // Safe token upper bound for OpenRouter balance
+          max_tokens: 2048,
         }),
       });
 
@@ -134,7 +174,7 @@ async function callOpenRouter(
         const errText = await response.text();
         lastErrorMessage = errText;
         if (response.status === 402) {
-          return { error: `OpenRouter credit balance reached. Switched to Gemini 3.7 Flash.` };
+          return { error: `OpenRouter credit balance reached.` };
         }
         continue;
       }
@@ -150,14 +190,14 @@ async function callOpenRouter(
   }
 
   if (lastStatus === 404) {
-    return { error: `No active OpenRouter endpoints for ${model}. Switched to Gemini 3.7 Flash.` };
+    return { error: `No active OpenRouter endpoints for ${model}.` };
   }
 
   if (lastStatus === 402) {
-    return { error: `OpenRouter credit balance limit reached. Switched to Gemini 3.7 Flash.` };
+    return { error: `OpenRouter credit balance limit reached.` };
   }
 
-  return { error: `Model ${model} unavailable on OpenRouter. Switched to Gemini 3.7 Flash.` };
+  return { error: `Model ${model} was unavailable (status ${lastStatus || 'network error'}).` };
 }
 
 // Resilient Gemini Execution with tiered fallback sequence, retry logic, and dynamic recovery
@@ -316,19 +356,23 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     const isOpenRouterModel =
       model.startsWith("openai/") ||
       model.startsWith("anthropic/") ||
-      model.startsWith("deepseek/");
+      model.startsWith("deepseek/") ||
+      model.startsWith("meta-llama/") ||
+      model.startsWith("qwen/") ||
+      model.startsWith("mistralai/");
 
     let openRouterFallbackTriggered = false;
     let customFallbackNote: string | undefined = undefined;
 
     // 1. If OpenRouter model requested, attempt OpenRouter first
-    if (isOpenRouterModel && prompt && !attachment) {
+    if (isOpenRouterModel && (prompt || attachment)) {
       const openRouterResult = await callOpenRouter(
         model,
         prompt,
         history,
         systemInstruction,
-        temperature
+        temperature,
+        attachment
       );
 
       if (openRouterResult && "text" in openRouterResult) {
@@ -351,6 +395,29 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     // 2. Execute via Google Gemini
     const ai = getGeminiClient();
     if (!ai) {
+      // If GEMINI_API_KEY is not provided directly, seamlessly use active OpenRouter connection for Google models
+      if (
+        process.env.OPENROUTER_API_KEY &&
+        process.env.OPENROUTER_API_KEY !== "MY_OPENROUTER_API_KEY"
+      ) {
+        const geminiOpenRouterResult = await callOpenRouter(
+          model,
+          prompt,
+          history,
+          systemInstruction,
+          temperature,
+          attachment
+        );
+        if (geminiOpenRouterResult && "text" in geminiOpenRouterResult) {
+          return res.json({
+            text: geminiOpenRouterResult.text,
+            modelUsed: model,
+            latencyMs: Date.now() - startTime,
+            fallbackTriggered: false,
+          });
+        }
+      }
+
       const displayModel = model || "gemini-3.7-flash";
       return res.status(200).json({
         text: `I processed your request using **${displayModel}**:\n\n> *"${prompt || 'Uploaded File Attachment'}"*\n\n*(Note: Configure \`GEMINI_API_KEY\` in your environment secrets to enable live API completions.)*`,

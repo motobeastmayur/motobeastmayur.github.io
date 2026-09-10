@@ -36,6 +36,8 @@ export interface ChatMessage {
   attachment?: ChatAttachment;
   groundingSources?: GroundingSource[];
   error?: string;
+  thoughtDurationSec?: number;
+  thoughtSteps?: string[];
 }
 
 export interface ChatFolder {

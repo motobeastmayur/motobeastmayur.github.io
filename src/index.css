@@ -3,12 +3,61 @@
 @layer base {
   body {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #000000;
+    background-color: #08060f;
     color: #f1f5f9;
   }
   code, pre {
     font-family: 'JetBrains Mono', monospace;
   }
+}
+
+/* Gemini-style Thinking Animations */
+@keyframes gemini-shimmer-text {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-gemini-shimmer {
+  background: linear-gradient(90deg, #4e8cff 0%, #7f5af0 25%, #c441a5 50%, #f56565 75%, #4e8cff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gemini-shimmer-text 2.5s linear infinite;
+}
+
+@keyframes gemini-wave-pulse {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-gemini-wave {
+  animation: gemini-wave-pulse 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes gemini-star-spin {
+  0% {
+    transform: rotate(0deg) scale(0.92);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.92);
+  }
+}
+
+.animate-gemini-star {
+  animation: gemini-star-spin 5s ease-in-out infinite;
+  transform-origin: center;
 }
 
 /* Neon Glow Utility Classes */
@@ -101,15 +150,15 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: #0c081a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 243, 255, 0.3);
+  background: rgba(168, 85, 247, 0.3);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 243, 255, 0.6);
-  box-shadow: 0 0 8px #00f3ff;
+  background: rgba(168, 85, 247, 0.6);
+  box-shadow: 0 0 8px #a855f7;
 }

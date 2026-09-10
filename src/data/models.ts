@@ -3,12 +3,12 @@ import { AIModel } from '../types';
 export const AVAILABLE_MODELS: AIModel[] = [
   {
     id: 'gemini-3.7-flash',
-    name: 'Gemini 3.7 Flash',
-    shortName: '3.7 Flash',
+    name: 'Auto (Best Available)',
+    shortName: 'Auto',
     provider: 'google',
-    description: 'High-speed multimodal intelligence with real-time web grounding and high reliability.',
-    badge: 'Default',
-    badgeColor: 'border-[#00f3ff] text-[#00f3ff]',
+    description: 'High-speed multimodal intelligence with automatic failover and live web grounding.',
+    badge: 'Recommended',
+    badgeColor: 'border-purple-400 text-purple-400',
     speed: 'Ultra Fast',
     supportsVision: true,
     supportsWebSearch: true,

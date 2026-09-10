@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Plus,
+  MessageSquarePlus,
   FolderPlus,
   Folder,
   MessageSquare,
@@ -10,10 +10,8 @@ import {
   MoreVertical,
   X,
   Check,
-  FolderInput,
-  Sparkles,
-  ChevronRight,
   Layers,
+  Settings,
 } from 'lucide-react';
 import { ChatSession, ChatFolder } from '../types';
 
@@ -33,6 +31,7 @@ interface SidebarProps {
   onMoveChatToFolder: (sessionId: string, folderId: string | null) => void;
   selectedFolderId: string | null;
   setSelectedFolderId: (folderId: string | null) => void;
+  theme?: 'dark' | 'light';
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -51,6 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMoveChatToFolder,
   selectedFolderId,
   setSelectedFolderId,
+  theme = 'dark',
 }) => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -59,6 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [renamingTitle, setRenamingTitle] = useState('');
 
   const menuRef = useRef<HTMLDivElement>(null);
+  const isLight = theme === 'light';
 
   // Close three-dot menu on click outside
   useEffect(() => {
@@ -113,161 +114,177 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Backdrop overlay on mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-72 sm:w-80 bg-[#000000]/95 backdrop-blur-2xl border-r border-[#00f3ff]/20 flex flex-col transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed lg:static top-0 bottom-0 left-0 z-40 w-72 flex flex-col p-3.5 transition-all duration-300 ease-in-out select-none flex-shrink-0 ${
+          isLight
+            ? 'bg-white border-r border-slate-200 text-slate-800'
+            : 'bg-[#090712] border-r border-white/[0.07] text-neutral-200'
+        } ${isOpen ? 'translate-x-0' : '-translate-x-full lg:hidden'}`}
       >
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-neutral-900 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#00f3ff] shadow-[0_0_8px_#00f3ff]" />
-            <span className="font-bold text-sm tracking-wide text-white">Workspaces</span>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900 transition-colors cursor-pointer"
-            title="Close sidebar"
+        {/* Top Button 1: Primary button */}
+        <button
+          id="sidebar-new-chat-btn"
+          type="button"
+          onClick={() => {
+            onNewChat();
+            if (window.innerWidth < 1024) onClose();
+          }}
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-medium text-xs tracking-wide transition-all shadow-[0_2px_12px_rgba(124,58,237,0.25)] border border-violet-400/25 cursor-pointer active:scale-[0.98]"
+        >
+          <MessageSquarePlus className="w-4 h-4 text-white" />
+          <span>New Chat Workspace</span>
+        </button>
+
+        {/* Top Button 2: Folder pill */}
+        <button
+          id="sidebar-add-folder-btn"
+          type="button"
+          onClick={() => setIsCreatingFolder((prev) => !prev)}
+          className={`w-full flex items-center gap-3 px-3.5 py-2.5 mt-2 rounded-xl text-xs font-medium transition-all cursor-pointer border ${
+            isLight
+              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+              : 'bg-[#120e20] hover:bg-[#19142c] text-neutral-200 border-white/[0.08] hover:border-violet-500/40'
+          }`}
+        >
+          <FolderPlus className="w-4 h-4 text-violet-500" />
+          <span>New Project Folder</span>
+        </button>
+
+        {/* Inline Folder Creation Form */}
+        {isCreatingFolder && (
+          <form
+            onSubmit={handleCreateFolderSubmit}
+            className="mt-2 p-2 rounded-xl bg-[#140f24] border border-violet-500/40 space-y-2 animate-fade-in"
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Action Controls: New Chat & Add Folder */}
-        <div className="p-3 space-y-2 border-b border-neutral-900">
-          {/* New Chat Button */}
-          <button
-            id="sidebar-new-chat-btn"
-            type="button"
-            onClick={() => {
-              onNewChat();
-              if (window.innerWidth < 1024) onClose();
-            }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#00f3ff]/20 to-[#b026ff]/20 hover:from-[#00f3ff]/30 hover:to-[#b026ff]/30 border border-[#00f3ff]/50 hover:border-[#00f3ff] text-white font-semibold text-xs shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:shadow-[0_0_20px_rgba(0,243,255,0.35)] transition-all cursor-pointer group"
-          >
-            <Plus className="w-4 h-4 text-[#00f3ff] group-hover:rotate-90 transition-transform duration-200" />
-            <span>New Chat</span>
-          </button>
-
-          {/* Add Folder Button */}
-          <button
-            id="sidebar-add-folder-btn"
-            type="button"
-            onClick={() => setIsCreatingFolder((prev) => !prev)}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-black hover:bg-neutral-950 border border-neutral-800 hover:border-[#b026ff]/60 text-neutral-300 hover:text-[#b026ff] text-xs font-medium transition-all cursor-pointer"
-          >
-            <FolderPlus className="w-3.5 h-3.5 text-[#b026ff]" />
-            <span>Add Folder</span>
-          </button>
-
-          {/* Inline Folder Creation Form */}
-          {isCreatingFolder && (
-            <form
-              onSubmit={handleCreateFolderSubmit}
-              className="p-2 rounded-xl bg-neutral-950 border border-[#b026ff]/40 space-y-2 animate-fade-in"
-            >
-              <input
-                type="text"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                placeholder="Folder name..."
-                autoFocus
-                className="w-full bg-black px-2.5 py-1.5 rounded-lg border border-neutral-800 focus:border-[#b026ff] text-xs text-white placeholder-neutral-500 outline-none"
-              />
-              <div className="flex justify-end gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setIsCreatingFolder(false)}
-                  className="px-2 py-1 rounded-md text-[11px] text-neutral-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-2.5 py-1 rounded-md bg-[#b026ff] hover:bg-[#b026ff]/90 text-white text-[11px] font-medium"
-                >
-                  Create
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-
-        {/* Folders Navigation Filter */}
-        {folders.length > 0 && (
-          <div className="px-3 pt-3 pb-2 border-b border-neutral-900">
-            <div className="text-[10px] uppercase font-mono tracking-wider text-neutral-400 font-bold mb-2 flex items-center gap-1">
-              <Folder className="w-3 h-3 text-[#00f3ff]" />
-              <span>Folders</span>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5">
+            <input
+              type="text"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="Folder name..."
+              autoFocus
+              className="w-full bg-[#0a0714] px-2.5 py-1.5 rounded-lg border border-white/[0.1] focus:border-violet-500 text-xs text-white placeholder-neutral-500 outline-none"
+            />
+            <div className="flex justify-end gap-1.5">
               <button
                 type="button"
-                onClick={() => setSelectedFolderId(null)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                  selectedFolderId === null
-                    ? 'bg-[#00f3ff]/20 text-[#00f3ff] border border-[#00f3ff]/50'
-                    : 'bg-black text-neutral-400 hover:text-white border border-neutral-800'
-                }`}
+                onClick={() => setIsCreatingFolder(false)}
+                className="px-2 py-1 rounded-md text-[11px] text-neutral-400 hover:text-white cursor-pointer"
               >
-                All ({sessions.length})
+                Cancel
               </button>
+              <button
+                type="submit"
+                className="px-2.5 py-1 rounded-md bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-medium cursor-pointer"
+              >
+                Create
+              </button>
+            </div>
+          </form>
+        )}
 
-              {folders.map((folder) => {
-                const count = sessions.filter((s) => s.folderId === folder.id).length;
-                const isSelected = selectedFolderId === folder.id;
+        {/* Section 1: PROJECTS */}
+        <div className="mt-5 mb-2 px-1">
+          <h3
+            className={`text-[11px] font-semibold uppercase tracking-wider ${
+              isLight ? 'text-slate-500' : 'text-neutral-400'
+            }`}
+          >
+            PROJECTS
+          </h3>
+        </div>
 
-                return (
-                  <div
-                    key={folder.id}
-                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs border transition-all ${
-                      isSelected
-                        ? 'bg-[#b026ff]/20 text-[#b026ff] border-[#b026ff]/60'
-                        : 'bg-black text-neutral-400 hover:text-white border-neutral-800'
-                    }`}
+        {folders.length === 0 ? (
+          <p className={`text-xs italic px-1 mb-2 ${isLight ? 'text-slate-400' : 'text-neutral-500'}`}>
+            No projects created...
+          </p>
+        ) : (
+          <div className="space-y-1 mb-2">
+            <button
+              type="button"
+              onClick={() => setSelectedFolderId(null)}
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer ${
+                selectedFolderId === null
+                  ? isLight
+                    ? 'bg-violet-50 text-violet-700 border border-violet-200 font-medium'
+                    : 'bg-[#1a132e] text-violet-200 border border-violet-500/40 font-medium'
+                  : isLight
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  : 'text-neutral-400 hover:text-white hover:bg-[#120e22]'
+              }`}
+            >
+              <span>All Workspaces</span>
+              <span className={`text-[10px] font-mono ${isLight ? 'text-slate-400' : 'text-neutral-500'}`}>
+                {sessions.length}
+              </span>
+            </button>
+
+            {folders.map((folder) => {
+              const count = sessions.filter((s) => s.folderId === folder.id).length;
+              const isSelected = selectedFolderId === folder.id;
+
+              return (
+                <div
+                  key={folder.id}
+                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-all ${
+                    isSelected
+                      ? isLight
+                        ? 'bg-violet-50 text-violet-700 border border-violet-200 font-medium'
+                        : 'bg-[#1a132e] text-violet-200 border border-violet-500/40 font-medium'
+                      : isLight
+                      ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      : 'text-neutral-400 hover:text-white hover:bg-[#120e22]'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFolderId(folder.id)}
+                    className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
                   >
-                    <button
-                      type="button"
-                      onClick={() => setSelectedFolderId(folder.id)}
-                      className="cursor-pointer font-medium"
-                    >
-                      {folder.name} ({count})
-                    </button>
+                    <Folder className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" />
+                    <span className="truncate">{folder.name}</span>
+                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-mono text-neutral-500">{count}</span>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteFolder(folder.id);
                       }}
-                      className="hover:text-red-400 p-0.5"
+                      className="text-neutral-500 hover:text-red-400 p-0.5 cursor-pointer"
                       title="Delete folder"
                     >
-                      <X className="w-2.5 h-2.5" />
+                      <X className="w-3 h-3" />
                     </button>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {/* Chat Sessions List */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
-          <div className="text-[10px] uppercase font-mono tracking-wider text-neutral-400 font-bold px-1 mb-1">
-            <span>Conversations ({sortedSessions.length})</span>
-          </div>
+        {/* Section 2: SAVED CONVERSATIONS */}
+        <div className="mt-4 mb-2 px-1">
+          <h3
+            className={`text-[11px] font-semibold uppercase tracking-wider ${
+              isLight ? 'text-slate-500' : 'text-neutral-400'
+            }`}
+          >
+            SAVED CONVERSATIONS
+          </h3>
+        </div>
 
+        <div className="flex-1 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
           {sortedSessions.length === 0 ? (
-            <div className="py-8 text-center text-xs text-neutral-500">
-              No saved conversations yet.
-            </div>
+            <p className={`text-xs px-1 leading-relaxed ${isLight ? 'text-slate-400' : 'text-neutral-500'}`}>
+              Start typing to save chat history automatically...
+            </p>
           ) : (
             sortedSessions.map((session) => {
               const isActive = session.id === activeSessionId;
@@ -279,12 +296,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={session.id}
                   className={`group relative rounded-xl transition-all duration-150 ${
                     isActive
-                      ? 'bg-neutral-950 border border-[#00f3ff]/60 shadow-[0_0_12px_rgba(0,243,255,0.15)]'
-                      : 'bg-black/50 hover:bg-neutral-950/80 border border-neutral-900 hover:border-neutral-800'
+                      ? isLight
+                        ? 'bg-violet-50 border border-violet-200 shadow-sm'
+                        : 'bg-[#18122c] border border-violet-500/40 shadow-[0_0_12px_rgba(124,58,237,0.12)]'
+                      : isLight
+                      ? 'bg-slate-50/70 hover:bg-slate-100 border border-slate-200/80'
+                      : 'bg-[#0d0a17] hover:bg-[#140f24] border border-white/[0.05]'
                   }`}
                 >
                   {isRenaming ? (
-                    /* Inline Rename Mode */
                     <div className="p-2 flex items-center gap-1.5">
                       <input
                         type="text"
@@ -295,25 +315,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           if (e.key === 'Enter') handleSaveRename(session.id);
                           if (e.key === 'Escape') setRenamingSessionId(null);
                         }}
-                        className="flex-1 bg-black px-2 py-1 rounded-lg border border-[#00f3ff] text-xs text-white outline-none"
+                        className="flex-1 bg-[#090710] px-2 py-1 rounded-lg border border-violet-500 text-xs text-white outline-none"
                       />
                       <button
                         onClick={() => handleSaveRename(session.id)}
-                        className="p-1 rounded-md bg-[#00f3ff]/20 text-[#00f3ff] hover:bg-[#00f3ff]/30 cursor-pointer"
+                        className="p-1 rounded-md bg-violet-600/30 text-violet-300 hover:bg-violet-600/40 cursor-pointer"
                         title="Save title"
                       >
                         <Check className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => setRenamingSessionId(null)}
-                        className="p-1 rounded-md text-neutral-400 hover:text-white"
+                        className="p-1 rounded-md text-neutral-400 hover:text-white cursor-pointer"
                         title="Cancel"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ) : (
-                    /* Normal Session Row */
                     <div className="flex items-center justify-between p-2.5">
                       <button
                         type="button"
@@ -325,7 +344,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       >
                         <div className="mt-0.5 flex-shrink-0">
                           {session.isPinned ? (
-                            <Pin className="w-3.5 h-3.5 text-[#00f3ff] fill-[#00f3ff]/20" />
+                            <Pin className="w-3.5 h-3.5 text-violet-400 fill-violet-400/20" />
                           ) : (
                             <MessageSquare className="w-3.5 h-3.5 text-neutral-500 group-hover:text-neutral-300" />
                           )}
@@ -343,7 +362,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             {session.folderId && (
                               <>
                                 <span>•</span>
-                                <span className="text-[#b026ff]">
+                                <span className="text-violet-400">
                                   {folders.find((f) => f.id === session.folderId)?.name || 'Folder'}
                                 </span>
                               </>
@@ -352,67 +371,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                       </button>
 
-                      {/* Three-Dot Menu Trigger */}
-                      <div className="relative">
+                      {/* Options menu trigger */}
+                      <div className="relative ml-1">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setMenuOpenSessionId((prev) => (prev === session.id ? null : session.id));
+                            setMenuOpenSessionId(isMenuOpen ? null : session.id);
                           }}
-                          className={`p-1 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900 transition-colors cursor-pointer ${
-                            isMenuOpen ? 'text-[#00f3ff] bg-neutral-900' : 'opacity-70 group-hover:opacity-100'
-                          }`}
-                          title="Chat Options"
+                          className="p-1 rounded-md text-neutral-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          title="More options"
                         >
                           <MoreVertical className="w-3.5 h-3.5" />
                         </button>
 
-                        {/* Three-Dot Sleek Dropdown Menu */}
+                        {/* Dropdown menu */}
                         {isMenuOpen && (
                           <div
                             ref={menuRef}
-                            className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-black/95 backdrop-blur-2xl border border-[#00f3ff]/40 shadow-[0_8px_25px_rgba(0,0,0,0.9),0_0_15px_rgba(0,243,255,0.2)] p-1.5 z-50 animate-fade-in divide-y divide-neutral-900"
+                            className="absolute right-0 top-6 w-44 rounded-xl bg-[#0e0b1c] border border-white/[0.1] shadow-2xl p-1 z-50 animate-fade-in divide-y divide-white/[0.06]"
                           >
-                            <div className="space-y-0.5 pb-1">
-                              {/* Pin / Unpin */}
+                            <div className="py-0.5">
                               <button
                                 type="button"
                                 onClick={() => {
                                   onPinChat(session.id);
                                   setMenuOpenSessionId(null);
                                 }}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs text-neutral-300 hover:text-[#00f3ff] hover:bg-neutral-900 transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs text-neutral-300 hover:text-white hover:bg-[#1a142e] cursor-pointer"
                               >
-                                <Pin className="w-3.5 h-3.5 text-[#00f3ff]" />
-                                <span>{session.isPinned ? 'Unpin Chat' : 'Pin Chat'}</span>
+                                <Pin className="w-3.5 h-3.5" />
+                                <span>{session.isPinned ? 'Unpin Chat' : 'Pin to Top'}</span>
                               </button>
-
-                              {/* Rename */}
                               <button
                                 type="button"
                                 onClick={() => handleStartRename(session)}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs text-neutral-300 hover:text-white hover:bg-neutral-900 transition-colors cursor-pointer"
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs text-neutral-300 hover:text-white hover:bg-[#1a142e] cursor-pointer"
                               >
-                                <Edit2 className="w-3.5 h-3.5 text-amber-400" />
-                                <span>Rename Chat</span>
+                                <Edit2 className="w-3.5 h-3.5" />
+                                <span>Rename</span>
                               </button>
                             </div>
 
-                            {/* Move to Folder Options */}
+                            {/* Move to folder */}
                             {folders.length > 0 && (
-                              <div className="py-1">
-                                <div className="px-2 py-0.5 text-[9px] uppercase font-mono text-neutral-400">
-                                  Folder
-                                </div>
+                              <div className="py-0.5">
+                                <p className="px-2.5 py-1 text-[9px] uppercase font-mono text-neutral-500 font-semibold">
+                                  Move to Folder
+                                </p>
                                 <button
                                   type="button"
                                   onClick={() => {
                                     onMoveChatToFolder(session.id, null);
                                     setMenuOpenSessionId(null);
                                   }}
-                                  className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-left text-xs hover:bg-neutral-900 cursor-pointer ${
-                                    !session.folderId ? 'text-[#00f3ff]' : 'text-neutral-400'
+                                  className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-left text-xs hover:bg-[#1a142e] cursor-pointer ${
+                                    !session.folderId ? 'text-violet-400' : 'text-neutral-400'
                                   }`}
                                 >
                                   <Layers className="w-3 h-3" />
@@ -426,11 +440,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                       onMoveChatToFolder(session.id, f.id);
                                       setMenuOpenSessionId(null);
                                     }}
-                                    className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-left text-xs hover:bg-neutral-900 cursor-pointer ${
-                                      session.folderId === f.id ? 'text-[#b026ff]' : 'text-neutral-400'
+                                    className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-left text-xs hover:bg-[#1a142e] cursor-pointer ${
+                                      session.folderId === f.id ? 'text-violet-400' : 'text-neutral-400'
                                     }`}
                                   >
-                                    <Folder className="w-3 h-3 text-[#b026ff]" />
+                                    <Folder className="w-3 h-3 text-violet-400" />
                                     <span className="truncate">{f.name}</span>
                                   </button>
                                 ))}
@@ -438,7 +452,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             )}
 
                             {/* Delete Action */}
-                            <div className="pt-1">
+                            <div className="pt-0.5">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -460,6 +474,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
               );
             })
           )}
+        </div>
+
+        {/* Bottom Profile Card */}
+        <div className="mt-auto pt-3">
+          <div
+            className={`p-2.5 rounded-xl border flex items-center justify-between ${
+              isLight
+                ? 'bg-slate-50 border-slate-200'
+                : 'bg-[#0f0c1b] border-white/[0.08]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold text-xs ${
+                  isLight
+                    ? 'bg-violet-100 border-violet-200 text-violet-700'
+                    : 'bg-[#1b152e] border-violet-500/30 text-violet-200'
+                }`}
+              >
+                G
+              </div>
+              <div>
+                <p className={`text-xs font-semibold leading-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                  Guest User
+                </p>
+                <p className={`text-[11px] leading-tight mt-0.5 ${isLight ? 'text-slate-500' : 'text-neutral-400'}`}>
+                  Workspace Active
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={`p-1 rounded-lg transition-colors cursor-pointer ${
+                isLight ? 'text-slate-400 hover:text-slate-700' : 'text-neutral-400 hover:text-white'
+              }`}
+              title="Workspace Settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </aside>
     </>
